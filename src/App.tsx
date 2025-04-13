@@ -152,7 +152,7 @@ function App() {
   };
 
   // Start all tests
-  const startTesting = () => {
+  const startTesting = async () => {
     // Clear any existing test handles
     httpCancelHandles.forEach((handle) => handle.cancel());
     stompCancelHandles.forEach((handle) => handle.cancel());
@@ -167,12 +167,14 @@ function App() {
     });
     setHttpCancelHandles(newHttpHandles);
 
-    const newStompHandles = stompConfigs.map((item) => {
-      if (item.config.endpoint) {
-        return runStompTest(item.config, soakDuration);
-      }
-      return { cancel: () => {} };
-    });
+    const newStompHandles = await Promise.all(
+      stompConfigs.map(async (item) => {
+        if (item.config.endpoint) {
+          return await runStompTest(item.config, soakDuration);
+        }
+        return { cancel: () => {} };
+      })
+    );
     setStompCancelHandles(newStompHandles);
 
     // Automatically stop testing after soakDuration

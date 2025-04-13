@@ -1,4 +1,5 @@
 import { Client } from "@stomp/stompjs";
+import axios from "axios";
 
 export type StompMessageType = {
   destination: string;
@@ -9,6 +10,7 @@ export type StompMessageType = {
 };
 
 export type StompTestConfigType = {
+  authEndpoint?: string;
   endpoint: string;
   messages: StompMessageType[];
   soakRate: number; // messages per second continuously
@@ -33,12 +35,23 @@ export function getRunningTime(): number {
   return Math.floor((Date.now() - stompMetrics.startTime) / 1000);
 }
 
-export function runStompTest(config: StompTestConfigType, soakDuration: number): { cancel: () => void } {
+export async function runStompTest(
+  config: StompTestConfigType,
+  soakDuration: number
+): Promise<{ cancel: () => void }> {
   // Reset startTime on new test
   stompMetrics.startTime = Date.now();
 
+  let token: string = "";
+  if (config.authEndpoint) {
+    token = await axios.get(config.authEndpoint);
+  }
+
   const client = new Client({
     brokerURL: config.endpoint,
+    connectHeaders: {
+      Authorization: `Bearer ${token}`,
+    },
     reconnectDelay: 5000,
   });
 
@@ -81,11 +94,11 @@ export function runStompTest(config: StompTestConfigType, soakDuration: number):
 
   client.activate();
 
-  return {
+  return Promise.resolve({
     cancel: () => {
       if (soakInterval) clearInterval(soakInterval);
       if (soakTimeout) clearTimeout(soakTimeout);
       client.deactivate();
-    }
-  };
+    },
+  });
 }
