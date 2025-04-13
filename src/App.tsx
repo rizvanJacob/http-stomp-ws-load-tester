@@ -22,13 +22,8 @@ import {
   getRunningTime as getStompRunningTime,
 } from "./services/StompTester";
 import { IsTestingContext } from "./contexts/IsTestingContext";
-import { createTheme, ThemeProvider, CssBaseline } from "@mui/material";
-
-const darkTheme = createTheme({
-  palette: {
-    mode: 'dark',
-  },
-});
+import { ThemeProvider, CssBaseline } from "@mui/material";
+import theme from "./theme";
 
 // Utility to generate unique IDs
 let idCounter = 1;
@@ -201,19 +196,21 @@ function App() {
   };
 
   return (
-    <ThemeProvider theme={darkTheme}>
+    <ThemeProvider theme={theme}>
       <CssBaseline />
       <Box sx={{ p: 2 }}>
-        <Typography variant="h4" gutterBottom>
+        <Typography variant="h4" fontWeight="bold">
           HTTP and STOMP (over WebSocket) Load Tester
         </Typography>
         <Typography variant="body1" sx={{ mb: 2 }}>
-          This load test will send a burst of requests/messages immediately, then
-          continue sending at the specified soak rate for the test duration.
+          This load test will send a burst of requests/messages immediately,
+          then continue sending at the specified soak rate for the test
+          duration.
         </Typography>
         <Typography variant="body1" sx={{ mb: 2 }}>
-          HTTP Requests and STOMP (over WebSocket) messages are supported. Use the
-          forms below to configure your test as desired, then start the test.
+          HTTP Requests and STOMP (over WebSocket) messages are supported. Use
+          the forms below to configure your test as desired, then start the
+          test.
         </Typography>
         <IsTestingContext.Provider value={isTesting}>
           <Box sx={{ mb: 4 }}>
@@ -283,7 +280,8 @@ function App() {
               Total HTTP Requests Sent: {httpMetrics.totalMessages}
             </Typography>
             <Typography>
-              HTTP Requests Sent in Last Second: {httpMetrics.messagesLastSecond}
+              HTTP Requests Sent in Last Second:{" "}
+              {httpMetrics.messagesLastSecond}
             </Typography>
             <Typography>
               Total STOMP Messages Sent: {stompMetrics.totalMessages}
