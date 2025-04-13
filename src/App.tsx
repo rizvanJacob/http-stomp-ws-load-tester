@@ -167,6 +167,12 @@ function App() {
       return { cancel: () => {} };
     });
     setStompCancelHandles(newStompHandles);
+
+    // Automatically stop testing after soakDuration
+    setTimeout(() => {
+      cancelTesting();
+      setIsTesting(false);
+    }, soakDuration * 1000);
   };
 
   // Cancel all running tests
@@ -242,6 +248,7 @@ function App() {
           permission. Misuse may be considered a DDOS attack.
         </Alert>
         <Stack direction="row" spacing={1}>
+          <Box sx={{ flex: 1 }} />
           <TextField
             label="Test Duration (seconds)"
             type="number"
@@ -258,28 +265,27 @@ function App() {
           </Button>
         </Stack>
       </IsTestingContext.Provider>
-      {isTesting && (
-        <Box sx={{ mt: 4 }}>
-          <Typography variant="h5">Metrics</Typography>
-          <Box sx={{ mt: 2 }}>
-            <Typography>
-              Total HTTP Requests Sent: {httpMetrics.totalMessages}
-            </Typography>
-            <Typography>
-              HTTP Requests Sent in Last Second:{" "}
-              {httpMetrics.messagesLastSecond}
-            </Typography>
-            <Typography>
-              Total STOMP Messages Sent: {stompMetrics.totalMessages}
-            </Typography>
-            <Typography>
-              STOMP Messages Sent in Last Second:{" "}
-              {stompMetrics.messagesLastSecond}
-            </Typography>
+      <Box sx={{ mt: 4 }}>
+        <Typography variant="h5">Metrics</Typography>
+        <Box sx={{ mt: 2 }}>
+          <Typography>
+            Total HTTP Requests Sent: {httpMetrics.totalMessages}
+          </Typography>
+          <Typography>
+            HTTP Requests Sent in Last Second: {httpMetrics.messagesLastSecond}
+          </Typography>
+          <Typography>
+            Total STOMP Messages Sent: {stompMetrics.totalMessages}
+          </Typography>
+          <Typography>
+            STOMP Messages Sent in Last Second:{" "}
+            {stompMetrics.messagesLastSecond}
+          </Typography>
+          {isTesting && (
             <Typography>Running Time: {getRunningTime()} seconds</Typography>
-          </Box>
+          )}
         </Box>
-      )}
+      </Box>
     </Box>
   );
 }
