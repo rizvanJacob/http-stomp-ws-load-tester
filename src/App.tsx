@@ -55,6 +55,7 @@ interface ConfigType<T> {
 const httpConfigsKey = "httpConfigs";
 const stompConfigsKey = "stompConfigs";
 const usernamesKey = "usernames";
+const durationKey = "testDuration";
 
 function App() {
   // State for configurations
@@ -96,10 +97,15 @@ function App() {
     setUsernames(names);
   }, [usernamesInput]);
 
-  // Global soak duration state
-  const [isTesting, setIsTesting] = useState(false);
-  const [soakDuration, setSoakDuration] = useState(60); // default 60 seconds
+  const [testDuration, setTestDuration] = useState(() => {
+    const saved = localStorage.getItem(durationKey);
+    return Number(saved) || 60; // default 60 seconds
+  });
+  useEffect(() => {
+    localStorage.setItem(durationKey, testDuration.toString());
+  }, [testDuration]);
 
+  const [isTesting, setIsTesting] = useState(false);
   // Dummy state for re-rendering metrics
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_tick, setTick] = useState(0);
@@ -171,7 +177,7 @@ function App() {
 
     const newHttpHandles = httpConfigs.map((item) => {
       if (item.config.url) {
-        return runHttpTest(item.config, soakDuration);
+        return runHttpTest(item.config, testDuration);
       }
       return { cancel: () => {} };
     });
@@ -180,7 +186,7 @@ function App() {
     const newStompHandles = await Promise.all(
       stompConfigs.map(async (item) => {
         if (item.config.endpoint) {
-          return await runStompTest(item.config, soakDuration);
+          return await runStompTest(item.config, testDuration);
         }
         return { cancel: () => {} };
       })
@@ -191,7 +197,7 @@ function App() {
     setTimeout(() => {
       cancelTesting();
       setIsTesting(false);
-    }, soakDuration * 1000);
+    }, testDuration * 1000);
   };
 
   // Cancel all running tests
@@ -273,7 +279,9 @@ function App() {
           <Stack direction="row" spacing={1}>
             <Tooltip
               sx={{ flex: 1 }}
-              title="Enter a comma-separated list of usernames to be used for Basic Authentication. Each username will be looped through and attached to HTTP requests during the test."
+              title="A list of usernames to be used for Basic Authentication. Each username will be looped through and attached to HTTP requests during the test."
+              followCursor
+              placement="right"
             >
               <TextField
                 label="Basic Auth Usernames (comma separated)"
@@ -286,8 +294,8 @@ function App() {
             <TextField
               label="Test Duration (seconds)"
               type="number"
-              value={soakDuration}
-              onChange={(e) => setSoakDuration(Number(e.target.value))}
+              value={testDuration}
+              onChange={(e) => setTestDuration(Number(e.target.value))}
               disabled={isTesting}
             />
             <Button
