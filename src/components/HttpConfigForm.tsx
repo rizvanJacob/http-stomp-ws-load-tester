@@ -1,6 +1,6 @@
-import React from "react";
 import { TextField, Box, Typography, IconButton } from "@mui/material";
 import { HttpTestConfig } from "../services/HttpTester";
+import { RemoveCircleOutline } from "@mui/icons-material";
 
 interface HttpConfigFormProps {
   config: HttpTestConfig;
@@ -8,26 +8,43 @@ interface HttpConfigFormProps {
   onRemove: () => void;
 }
 
-const HttpConfigForm: React.FC<HttpConfigFormProps> = ({ config, onChange, onRemove }) => {
-  const handleChange = (field: keyof HttpTestConfig) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    let newValue: any = e.target.value;
-    if (field === "soakRate" || field === "burstRate") {
-      newValue = Number(newValue);
-    } else if (field === "body") {
-      // Try to parse JSON, if fails then keep as string
-      try {
-        newValue = JSON.parse(newValue);
-      } catch (err) {
-        newValue = newValue;
+const HttpConfigForm: React.FC<HttpConfigFormProps> = ({
+  config,
+  onChange,
+  onRemove,
+}) => {
+  const handleChange =
+    (field: keyof HttpTestConfig) =>
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      let newValue: any = e.target.value;
+      if (field === "soakRate" || field === "burstRate") {
+        newValue = Number(newValue);
+      } else if (field === "body") {
+        // Try to parse JSON, if fails then keep as string
+        try {
+          newValue = JSON.parse(newValue);
+        } catch (err) {
+          newValue = newValue;
+        }
       }
-    }
-    onChange({ ...config, [field]: newValue });
-  };
+      onChange({ ...config, [field]: newValue });
+    };
 
   return (
-    <Box sx={{ p: 2, border: "1px solid #ccc", borderRadius: "8px", mb: 2, position: "relative" }}>
-      <IconButton onClick={onRemove} sx={{ position: "absolute", top: 0, right: 0 }}>
-        Delete
+    <Box
+      sx={{
+        p: 2,
+        border: "1px solid #ccc",
+        borderRadius: "8px",
+        mb: 2,
+        position: "relative",
+      }}
+    >
+      <IconButton
+        onClick={onRemove}
+        sx={{ position: "absolute", top: 0, right: 0 }}
+      >
+        <RemoveCircleOutline />
       </IconButton>
       <Typography variant="h6" gutterBottom>
         HTTP Load Test Configuration
@@ -41,7 +58,11 @@ const HttpConfigForm: React.FC<HttpConfigFormProps> = ({ config, onChange, onRem
       />
       <TextField
         label="JSON Body"
-        value={typeof config.body === "object" ? JSON.stringify(config.body, null, 2) : config.body}
+        value={
+          typeof config.body === "object"
+            ? JSON.stringify(config.body, null, 2)
+            : config.body
+        }
         onChange={handleChange("body")}
         fullWidth
         margin="normal"

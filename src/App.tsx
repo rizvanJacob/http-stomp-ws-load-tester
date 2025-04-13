@@ -43,7 +43,8 @@ function App() {
   ]);
 
   // Dummy state for re-rendering metrics
-  const [tick, setTick] = useState(0);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_tick, setTick] = useState(0);
   useEffect(() => {
     const interval = setInterval(() => setTick((t) => t + 1), 1000);
     return () => clearInterval(interval);
@@ -104,10 +105,10 @@ function App() {
   return (
     <Box sx={{ p: 2 }}>
       <Typography variant="h4" gutterBottom>
-        HTTP and STOMP Load Tester
+        HTTP and STOMP (over WebSocket) Load Tester
       </Typography>
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h5">HTTP Configurations</Typography>
+        <Typography variant="h5">HTTP Requests</Typography>
         {httpConfigs.map((item) => (
           <HttpConfigForm
             key={item.id}
@@ -121,7 +122,7 @@ function App() {
         </Button>
       </Box>
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h5">STOMP Configurations</Typography>
+        <Typography variant="h5">STOMP over WebSocket Messages</Typography>
         {stompConfigs.map((item) => (
           <StompConfigForm
             key={item.id}
@@ -140,7 +141,7 @@ function App() {
         onClick={startTesting}
         sx={{ mb: 4 }}
       >
-        Start Testing All Configs
+        Start Testing
       </Button>
       <Box>
         <Typography variant="h5">Metrics</Typography>

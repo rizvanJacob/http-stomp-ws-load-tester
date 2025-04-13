@@ -1,6 +1,6 @@
-import React from "react";
 import { Box, TextField, Typography, Button, IconButton } from "@mui/material";
 import { StompTestConfig, StompMessage } from "../services/StompTester";
+import { RemoveCircleOutline } from "@mui/icons-material";
 
 interface StompConfigFormProps {
   config: StompTestConfig;
@@ -63,7 +63,7 @@ const StompConfigForm: React.FC<StompConfigFormProps> = ({
         onClick={onRemove}
         sx={{ position: "absolute", top: 0, right: 0 }}
       >
-        Delete
+        <RemoveCircleOutline />
       </IconButton>
       <Typography variant="h6" gutterBottom>
         STOMP Load Test Configuration
@@ -103,7 +103,7 @@ const StompConfigForm: React.FC<StompConfigFormProps> = ({
             onClick={() => removeMessage(index)}
             sx={{ position: "absolute", top: 0, right: 0 }}
           >
-            Delete
+            <RemoveCircleOutline />
           </IconButton>
           <TextField
             label="Destination"
