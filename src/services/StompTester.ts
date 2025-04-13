@@ -1,17 +1,19 @@
 import { Client } from "@stomp/stompjs";
 
-export interface StompMessage {
+export type StompMessageType = {
   destination: string;
   headers: Record<string, string>;
-  body: object;
-}
+  body: object | string;
+  soakRate: number; // messages per second continuously for this message
+  burstRate: number; // messages per second in bursts for this message
+};
 
-export interface StompTestConfig {
+export type StompTestConfigType = {
   endpoint: string;
-  messages: StompMessage[];
+  messages: StompMessageType[];
   soakRate: number; // messages per second continuously
   burstRate: number; // messages per second in bursts
-}
+};
 
 // Metrics for STOMP tester
 export const stompMetrics = {
@@ -31,7 +33,7 @@ export function getRunningTime(): number {
   return Math.floor((Date.now() - stompMetrics.startTime) / 1000);
 }
 
-export function runStompTest(config: StompTestConfig): void {
+export function runStompTest(config: StompTestConfigType): void {
   // Reset startTime on new test
   stompMetrics.startTime = Date.now();
 

@@ -3,13 +3,13 @@ import { Box, Button, Typography } from "@mui/material";
 import HttpConfigForm from "./components/HttpConfigForm";
 import StompConfigForm from "./components/StompConfigForm";
 import {
-  HttpTestConfig,
+  HttpTestConfigType,
   runHttpTest,
   httpMetrics,
   getRunningTime as getHttpRunningTime,
 } from "./services/HttpTester";
 import {
-  StompTestConfig,
+  StompTestConfigType,
   runStompTest,
   stompMetrics,
   getRunningTime as getStompRunningTime,
@@ -19,14 +19,15 @@ import {
 let idCounter = 1;
 const getUniqueId = () => idCounter++;
 
-const defaultHttpConfig: HttpTestConfig = {
+const defaultHttpConfig: HttpTestConfigType = {
   url: "",
+  method: "get",
   body: {},
   soakRate: 1,
   burstRate: 1,
 };
 
-const defaultStompConfig: StompTestConfig = {
+const defaultStompConfig: StompTestConfigType = {
   endpoint: "",
   messages: [],
   soakRate: 1,
@@ -51,7 +52,7 @@ function App() {
   }, []);
 
   // Handlers for HTTP configs
-  const updateHttpConfig = (id: number, newConfig: HttpTestConfig) => {
+  const updateHttpConfig = (id: number, newConfig: HttpTestConfigType) => {
     setHttpConfigs((prev) =>
       prev.map((item) =>
         item.id === id ? { ...item, config: newConfig } : item
@@ -69,7 +70,7 @@ function App() {
   };
 
   // Handlers for STOMP configs
-  const updateStompConfig = (id: number, newConfig: StompTestConfig) => {
+  const updateStompConfig = (id: number, newConfig: StompTestConfigType) => {
     setStompConfigs((prev) =>
       prev.map((item) =>
         item.id === id ? { ...item, config: newConfig } : item
@@ -118,7 +119,7 @@ function App() {
           />
         ))}
         <Button variant="outlined" onClick={addHttpConfig} sx={{ mt: 1 }}>
-          Add HTTP Config
+          Add HTTP Request
         </Button>
       </Box>
       <Box sx={{ mb: 4 }}>
@@ -132,7 +133,7 @@ function App() {
           />
         ))}
         <Button variant="outlined" onClick={addStompConfig} sx={{ mt: 1 }}>
-          Add STOMP Config
+          Add STOMP over WebSocket Connection
         </Button>
       </Box>
       <Button

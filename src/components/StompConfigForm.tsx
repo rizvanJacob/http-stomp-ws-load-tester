@@ -1,10 +1,22 @@
-import { Box, TextField, Typography, Button, IconButton } from "@mui/material";
-import { StompTestConfig, StompMessage } from "../services/StompTester";
-import { RemoveCircleOutline } from "@mui/icons-material";
+import React from "react";
+import {
+  Box,
+  TextField,
+  Typography,
+  Button,
+  IconButton,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+} from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import DeleteIcon from "@mui/icons-material/Delete";
+import { StompTestConfigType, StompMessageType } from "../services/StompTester";
+import StompMessageConfigForm from "./StompMessageConfigForm";
 
 interface StompConfigFormProps {
-  config: StompTestConfig;
-  onChange: (config: StompTestConfig) => void;
+  config: StompTestConfigType;
+  onChange: (config: StompTestConfigType) => void;
   onRemove: () => void;
 }
 
@@ -14,137 +26,72 @@ const StompConfigForm: React.FC<StompConfigFormProps> = ({
   onRemove,
 }) => {
   const handleChange =
-    (field: keyof Omit<StompTestConfig, "messages">) =>
+    (field: keyof Omit<StompTestConfigType, "messages">) =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      let newValue: unknown = e.target.value;
-      if (field === "soakRate" || field === "burstRate") {
-        newValue = Number(newValue);
-      }
+      const newValue: unknown = e.target.value;
       onChange({ ...config, [field]: newValue });
     };
 
-  const handleMessageChange =
-    (index: number, field: keyof StompMessage) =>
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const messages = [...config.messages];
-      let newValue: unknown = e.target.value;
-      if (field === "headers" || field === "body") {
-        try {
-          newValue = JSON.parse(newValue as string);
-        } catch (error) {
-          console.error(error);
-          newValue = newValue as string;
-        }
-      }
-      messages[index] = { ...messages[index], [field]: newValue };
-      onChange({ ...config, messages });
-    };
-
   const addMessage = () => {
-    const newMessage: StompMessage = { destination: "", headers: {}, body: {} };
+    const newMessage: StompMessageType = {
+      destination: "",
+      headers: {},
+      body: {},
+      soakRate: 1,
+      burstRate: 1,
+    };
     onChange({ ...config, messages: [...config.messages, newMessage] });
   };
 
-  const removeMessage = (index: number) => {
-    const messages = config.messages.filter((_, i) => i !== index);
-    onChange({ ...config, messages });
-  };
 
   return (
-    <Box
-      sx={{
-        p: 2,
-        border: "1px solid #ccc",
-        borderRadius: "8px",
-        mb: 2,
-        position: "relative",
-      }}
-    >
-      <IconButton
-        onClick={onRemove}
-        sx={{ position: "absolute", top: 0, right: 0 }}
-      >
-        <RemoveCircleOutline />
-      </IconButton>
-      <Typography variant="h6" gutterBottom>
-        STOMP Load Test Configuration
-      </Typography>
-      <TextField
-        label="WebSocket Endpoint"
-        value={config.endpoint}
-        onChange={handleChange("endpoint")}
-        fullWidth
-        margin="normal"
-      />
-      <TextField
-        label="Soak Rate (messages/sec)"
-        type="number"
-        value={config.soakRate}
-        onChange={handleChange("soakRate")}
-        fullWidth
-        margin="normal"
-      />
-      <TextField
-        label="Burst Rate (messages/sec)"
-        type="number"
-        value={config.burstRate}
-        onChange={handleChange("burstRate")}
-        fullWidth
-        margin="normal"
-      />
-      <Typography variant="subtitle1" gutterBottom sx={{ mt: 2 }}>
-        Messages
-      </Typography>
-      {config.messages.map((message, index) => (
-        <Box
-          key={index}
-          sx={{ border: "1px dashed #aaa", p: 1, mb: 1, position: "relative" }}
-        >
-          <IconButton
-            onClick={() => removeMessage(index)}
-            sx={{ position: "absolute", top: 0, right: 0 }}
-          >
-            <RemoveCircleOutline />
-          </IconButton>
+    <Accordion sx={{ mb: 2, position: "relative" }}>
+      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+        <Typography variant="h6">
+          {config.endpoint
+            ? `Websocket Connection: ${config.endpoint}`
+            : "New Websocket Connection Configuration"}
+        </Typography>
+        <IconButton onClick={onRemove} sx={{ ml: "auto" }}>
+          <DeleteIcon />
+        </IconButton>
+      </AccordionSummary>
+      <AccordionDetails>
+        <Box sx={{ p: 2 }}>
           <TextField
-            label="Destination"
-            value={message.destination}
-            onChange={handleMessageChange(index, "destination")}
+            label="WebSocket Endpoint"
+            value={config.endpoint}
+            onChange={handleChange("endpoint")}
             fullWidth
             margin="normal"
           />
-          <TextField
-            label="Headers (JSON)"
-            value={
-              typeof message.headers === "object"
-                ? JSON.stringify(message.headers)
-                : message.headers
-            }
-            onChange={handleMessageChange(index, "headers")}
-            fullWidth
-            margin="normal"
-            multiline
-            minRows={2}
-          />
-          <TextField
-            label="Body (JSON)"
-            value={
-              typeof message.body === "object"
-                ? JSON.stringify(message.body)
-                : message.body
-            }
-            onChange={handleMessageChange(index, "body")}
-            fullWidth
-            margin="normal"
-            multiline
-            minRows={2}
-          />
+          {config.messages.map((message, index) => (
+            <StompMessageConfigForm
+              key={index}
+              message={message}
+              index={index}
+              onChange={(idx, field, value) => {
+                const messages = [...config.messages];
+                messages[idx] = { ...messages[idx], [field]: value };
+                onChange({ ...config, messages });
+              }}
+              onRateChange={(idx, field, value) => {
+                const messages = [...config.messages];
+                messages[idx] = { ...messages[idx], [field]: value };
+                onChange({ ...config, messages });
+              }}
+              onRemove={(idx) => {
+                const messages = config.messages.filter((_, i) => i !== idx);
+                onChange({ ...config, messages });
+              }}
+            />
+          ))}
+          <Button variant="outlined" onClick={addMessage} sx={{ mt: 1 }}>
+            Add STOMP Message
+          </Button>
         </Box>
-      ))}
-      <Button variant="outlined" onClick={addMessage} sx={{ mt: 1 }}>
-        Add Message
-      </Button>
-    </Box>
+      </AccordionDetails>
+    </Accordion>
   );
 };
 

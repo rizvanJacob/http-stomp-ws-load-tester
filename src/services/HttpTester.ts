@@ -1,11 +1,14 @@
 import axios from "axios";
 
-export interface HttpTestConfig {
+export type AllowedMethodsType = "get" | "post" | "put" | "delete" | "patch";
+
+export type HttpTestConfigType = {
   url: string;
+  method: AllowedMethodsType;
   body: object;
   soakRate: number; // requests per second continuously
   burstRate: number; // requests per second in bursts
-}
+};
 
 // Metrics for HTTP tester
 export const httpMetrics = {
@@ -25,7 +28,7 @@ export function getRunningTime(): number {
   return Math.floor((Date.now() - httpMetrics.startTime) / 1000);
 }
 
-export function runHttpTest(config: HttpTestConfig): void {
+export function runHttpTest(config: HttpTestConfigType): void {
   // Reset startTime on new test
   httpMetrics.startTime = Date.now();
 

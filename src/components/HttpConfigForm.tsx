@@ -1,26 +1,42 @@
-import { TextField, Box, Typography, IconButton } from "@mui/material";
-import { HttpTestConfig } from "../services/HttpTester";
-import { RemoveCircleOutline } from "@mui/icons-material";
+import {
+  TextField,
+  Box,
+  Typography,
+  IconButton,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Stack,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+} from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import DeleteIcon from "@mui/icons-material/Delete";
+import { AllowedMethodsType, HttpTestConfigType } from "../services/HttpTester";
+import RateConfig from "./RateConfig";
 
-interface HttpConfigFormProps {
-  config: HttpTestConfig;
-  onChange: (config: HttpTestConfig) => void;
+type HttpConfigFormPropsType = {
+  config: HttpTestConfigType;
+  onChange: (config: HttpTestConfigType) => void;
   onRemove: () => void;
-}
+};
 
-const HttpConfigForm: React.FC<HttpConfigFormProps> = ({
+const HttpConfigForm: React.FC<HttpConfigFormPropsType> = ({
   config,
   onChange,
   onRemove,
 }) => {
   const handleChange =
-    (field: keyof HttpTestConfig) =>
+    (field: keyof HttpTestConfigType) =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
       let newValue: unknown = e.target.value;
       if (field === "soakRate" || field === "burstRate") {
         newValue = Number(newValue);
+      } else if (field === "method") {
+        newValue = newValue as AllowedMethodsType;
       } else if (field === "body") {
-        // Try to parse JSON, if fails then keep as string
         try {
           newValue = JSON.parse(newValue as string);
         } catch (err) {
@@ -32,61 +48,73 @@ const HttpConfigForm: React.FC<HttpConfigFormProps> = ({
     };
 
   return (
-    <Box
-      sx={{
-        p: 2,
-        border: "1px solid #ccc",
-        borderRadius: "8px",
-        mb: 2,
-        position: "relative",
-      }}
-    >
-      <IconButton
-        onClick={onRemove}
-        sx={{ position: "absolute", top: 0, right: 0 }}
-      >
-        <RemoveCircleOutline />
-      </IconButton>
-      <Typography variant="h6" gutterBottom>
-        Configure HTTP Load Test
-      </Typography>
-      <TextField
-        label="URL"
-        value={config.url}
-        onChange={handleChange("url")}
-        fullWidth
-        margin="normal"
-      />
-      <TextField
-        label="JSON Body"
-        value={
-          typeof config.body === "object"
-            ? JSON.stringify(config.body, null, 2)
-            : config.body
-        }
-        onChange={handleChange("body")}
-        fullWidth
-        margin="normal"
-        multiline
-        minRows={3}
-      />
-      <TextField
-        label="Soak Rate (requests/sec)"
-        type="number"
-        value={config.soakRate}
-        onChange={handleChange("soakRate")}
-        fullWidth
-        margin="normal"
-      />
-      <TextField
-        label="Burst Rate (requests/sec)"
-        type="number"
-        value={config.burstRate}
-        onChange={handleChange("burstRate")}
-        fullWidth
-        margin="normal"
-      />
-    </Box>
+    <Accordion sx={{ mb: 2, position: "relative" }}>
+      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+        <Typography variant="h6">
+          {config.url && config.method
+            ? `${config.method.toUpperCase()} to ${config.url}`
+            : "New HTTP Request"}
+        </Typography>
+        <IconButton onClick={onRemove} sx={{ ml: "auto" }}>
+          <DeleteIcon />
+        </IconButton>
+      </AccordionSummary>
+      <AccordionDetails>
+        <Box sx={{ p: 2 }}>
+          <Stack
+            direction="row"
+            spacing={1}
+            alignContent="center"
+            alignItems="center"
+          >
+            <FormControl sx={{ width: "25%" }}>
+              <InputLabel>Method</InputLabel>
+              <Select
+                value={config.method}
+                label="Method"
+                onChange={(e) =>
+                  handleChange("method")(
+                    e as React.ChangeEvent<HTMLInputElement>
+                  )
+                }
+              >
+                <MenuItem value={"get"}>GET</MenuItem>
+                <MenuItem value={"post"}>POST</MenuItem>
+                <MenuItem value={"put"}>PUT</MenuItem>
+                <MenuItem value={"patch"}>PATH</MenuItem>
+                <MenuItem value={"delete"}>DELETE</MenuItem>
+              </Select>
+            </FormControl>
+            <TextField
+              label="URL"
+              value={config.url}
+              onChange={handleChange("url")}
+              fullWidth
+              margin="none"
+            />
+          </Stack>
+          <TextField
+            sx={{ flex: 1 }}
+            label="JSON Body"
+            value={
+              typeof config.body === "object"
+                ? JSON.stringify(config.body, null, 2)
+                : config.body
+            }
+            onChange={handleChange("body")}
+            fullWidth
+            margin="normal"
+            multiline
+            minRows={3}
+          />
+          <RateConfig
+            soakRate={config.soakRate}
+            burstRate={config.burstRate}
+            onChange={(field, value) => onChange({ ...config, [field]: value })}
+          />
+        </Box>
+      </AccordionDetails>
+    </Accordion>
   );
 };
 
