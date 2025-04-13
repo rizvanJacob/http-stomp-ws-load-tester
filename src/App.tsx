@@ -39,10 +39,13 @@ type ConfigType<T> = {
   config: T;
 };
 
+const httpConfigsKey = "httpConfigs";
+const stompConfigsKey = "stompConfigs";
+
 function App() {
   // States for config lists
   const [httpConfigs, setHttpConfigs] = useState(() => {
-    const savedHttpConfigs = localStorage.getItem("httpConfigs");
+    const savedHttpConfigs = localStorage.getItem(httpConfigsKey);
     return (
       savedHttpConfigs
         ? JSON.parse(savedHttpConfigs)
@@ -51,11 +54,11 @@ function App() {
   });
 
   useEffect(() => {
-    localStorage.setItem("httpConfigs", JSON.stringify(httpConfigs));
+    localStorage.setItem(httpConfigsKey, JSON.stringify(httpConfigs));
   }, [httpConfigs]);
 
   const [stompConfigs, setStompConfigs] = useState(() => {
-    const savedStompConfigs = localStorage.getItem("stompConfigs");
+    const savedStompConfigs = localStorage.getItem(stompConfigsKey);
     return (
       savedStompConfigs
         ? JSON.parse(savedStompConfigs)
@@ -64,7 +67,7 @@ function App() {
   });
 
   useEffect(() => {
-    localStorage.setItem("stompConfigs", JSON.stringify(stompConfigs));
+    localStorage.setItem(stompConfigsKey, JSON.stringify(stompConfigs));
   }, [stompConfigs]);
 
   // Dummy state for re-rendering metrics
