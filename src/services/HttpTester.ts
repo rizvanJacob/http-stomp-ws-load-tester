@@ -28,13 +28,18 @@ export function getRunningTime(): number {
   return Math.floor((Date.now() - httpMetrics.startTime) / 1000);
 }
 
-export function runHttpTest(config: HttpTestConfigType, soakDuration: number): { cancel: () => void } {
+export function runHttpTest(
+  config: HttpTestConfigType,
+  soakDuration: number
+): { cancel: () => void } {
   // Reset startTime on new test
   httpMetrics.startTime = Date.now();
 
   // Immediately send a burst of requests
   for (let i = 0; i < config.burstRate; i++) {
-    axios.post(config.url, config.body).catch(() => {});
+    axios({ method: config.method, url: config.url, data: config.body }).catch(
+      () => {}
+    );
     httpMetrics.totalMessages++;
     httpMetrics._lastSecondCount++;
   }
@@ -42,7 +47,9 @@ export function runHttpTest(config: HttpTestConfigType, soakDuration: number): {
   // Start the soak interval
   const intervalMs = 1000 / config.soakRate;
   const soakInterval = setInterval(() => {
-    axios.post(config.url, config.body).catch(() => {});
+    axios({ method: config.method, url: config.url, data: config.body }).catch(
+      () => {}
+    );
     httpMetrics.totalMessages++;
     httpMetrics._lastSecondCount++;
   }, intervalMs);
@@ -56,6 +63,6 @@ export function runHttpTest(config: HttpTestConfigType, soakDuration: number): {
     cancel: () => {
       clearInterval(soakInterval);
       clearTimeout(soakTimeout);
-    }
+    },
   };
 }
