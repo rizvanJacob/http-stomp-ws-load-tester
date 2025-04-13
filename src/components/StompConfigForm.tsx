@@ -61,6 +61,14 @@ const StompConfigForm: React.FC<StompConfigFormProps> = ({
       <AccordionDetails>
         <Box sx={{ p: 2 }}>
           <TextField
+            label="Token Exchange Endpoint"
+            value={config.authEndpoint || ""}
+            onChange={handleChange("authEndpoint")}
+            fullWidth
+            margin="normal"
+            disabled={isTesting}
+          />
+          <TextField
             label="WebSocket Endpoint"
             value={config.endpoint}
             onChange={handleChange("endpoint")}
