@@ -33,7 +33,7 @@ export function getRunningTime(): number {
   return Math.floor((Date.now() - stompMetrics.startTime) / 1000);
 }
 
-export function runStompTest(config: StompTestConfigType): void {
+export function runStompTest(config: StompTestConfigType, soakDuration: number): { cancel: () => void } {
   // Reset startTime on new test
   stompMetrics.startTime = Date.now();
 
@@ -42,10 +42,26 @@ export function runStompTest(config: StompTestConfigType): void {
     reconnectDelay: 5000,
   });
 
+  let soakInterval: ReturnType<typeof setInterval>;
+  let soakTimeout: ReturnType<typeof setTimeout>;
+
   client.onConnect = () => {
-    // Soak messages: send continuously at soakRate
+    // Immediately send a burst of messages
+    for (let i = 0; i < config.burstRate; i++) {
+      config.messages.forEach((message) => {
+        client.publish({
+          destination: message.destination,
+          headers: message.headers,
+          body: JSON.stringify(message.body),
+        });
+        stompMetrics.totalMessages++;
+        stompMetrics._lastSecondCount++;
+      });
+    }
+
+    // Start the soak interval
     const intervalMs = 1000 / config.soakRate;
-    setInterval(() => {
+    soakInterval = setInterval(() => {
       config.messages.forEach((message) => {
         client.publish({
           destination: message.destination,
@@ -57,21 +73,19 @@ export function runStompTest(config: StompTestConfigType): void {
       });
     }, intervalMs);
 
-    // Burst messages: send in bursts every second
-    setInterval(() => {
-      for (let i = 0; i < config.burstRate; i++) {
-        config.messages.forEach((message) => {
-          client.publish({
-            destination: message.destination,
-            headers: message.headers,
-            body: JSON.stringify(message.body),
-          });
-          stompMetrics.totalMessages++;
-          stompMetrics._lastSecondCount++;
-        });
-      }
-    }, 1000);
+    // After soakDuration seconds, stop the soak interval
+    soakTimeout = setTimeout(() => {
+      clearInterval(soakInterval);
+    }, soakDuration * 1000);
   };
 
   client.activate();
+
+  return {
+    cancel: () => {
+      if (soakInterval) clearInterval(soakInterval);
+      if (soakTimeout) clearTimeout(soakTimeout);
+      client.deactivate();
+    }
+  };
 }

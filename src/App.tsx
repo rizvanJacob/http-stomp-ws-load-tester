@@ -1,5 +1,12 @@
 import { useState, useEffect } from "react";
-import { Box, Button, Typography } from "@mui/material";
+import {
+  Box,
+  Button,
+  Typography,
+  TextField,
+  Alert,
+  Stack,
+} from "@mui/material";
 import HttpConfigForm from "./components/HttpConfigForm";
 import StompConfigForm from "./components/StompConfigForm";
 import {
@@ -34,41 +41,45 @@ const defaultStompConfig: StompTestConfigType = {
   burstRate: 1,
 };
 
-type ConfigType<T> = {
+// Types for stored configs
+interface ConfigType<T> {
   id: number;
   config: T;
-};
+}
 
 const httpConfigsKey = "httpConfigs";
 const stompConfigsKey = "stompConfigs";
 
 function App() {
-  // States for config lists
-  const [httpConfigs, setHttpConfigs] = useState(() => {
-    const savedHttpConfigs = localStorage.getItem(httpConfigsKey);
-    return (
-      savedHttpConfigs
-        ? JSON.parse(savedHttpConfigs)
-        : [{ id: getUniqueId(), config: { ...defaultHttpConfig } }]
-    ) as ConfigType<HttpTestConfigType>[];
+  // State for configurations
+  const [httpConfigs, setHttpConfigs] = useState<
+    ConfigType<HttpTestConfigType>[]
+  >(() => {
+    const saved = localStorage.getItem(httpConfigsKey);
+    return saved
+      ? JSON.parse(saved)
+      : [{ id: getUniqueId(), config: { ...defaultHttpConfig } }];
+  });
+
+  const [stompConfigs, setStompConfigs] = useState<
+    ConfigType<StompTestConfigType>[]
+  >(() => {
+    const saved = localStorage.getItem(stompConfigsKey);
+    return saved
+      ? JSON.parse(saved)
+      : [{ id: getUniqueId(), config: { ...defaultStompConfig } }];
   });
 
   useEffect(() => {
     localStorage.setItem(httpConfigsKey, JSON.stringify(httpConfigs));
   }, [httpConfigs]);
 
-  const [stompConfigs, setStompConfigs] = useState(() => {
-    const savedStompConfigs = localStorage.getItem(stompConfigsKey);
-    return (
-      savedStompConfigs
-        ? JSON.parse(savedStompConfigs)
-        : [{ id: getUniqueId(), config: { ...defaultStompConfig } }]
-    ) as ConfigType<StompTestConfigType>[];
-  });
-
   useEffect(() => {
     localStorage.setItem(stompConfigsKey, JSON.stringify(stompConfigs));
   }, [stompConfigs]);
+
+  // Global soak duration state
+  const [soakDuration, setSoakDuration] = useState(60); // default 60 seconds
 
   // Dummy state for re-rendering metrics
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -77,6 +88,14 @@ function App() {
     const interval = setInterval(() => setTick((t) => t + 1), 1000);
     return () => clearInterval(interval);
   }, []);
+
+  // Active test cancellation handles
+  const [httpCancelHandles, setHttpCancelHandles] = useState<
+    { cancel: () => void }[]
+  >([]);
+  const [stompCancelHandles, setStompCancelHandles] = useState<
+    { cancel: () => void }[]
+  >([]);
 
   // Handlers for HTTP configs
   const updateHttpConfig = (id: number, newConfig: HttpTestConfigType) => {
@@ -116,24 +135,49 @@ function App() {
 
   // Start all tests
   const startTesting = () => {
-    httpConfigs.forEach((item) => {
-      // Only start if URL is provided
+    // Clear any existing test handles
+    httpCancelHandles.forEach((handle) => handle.cancel());
+    stompCancelHandles.forEach((handle) => handle.cancel());
+    setHttpCancelHandles([]);
+    setStompCancelHandles([]);
+
+    const newHttpHandles = httpConfigs.map((item) => {
       if (item.config.url) {
-        runHttpTest(item.config);
+        return runHttpTest(item.config, soakDuration);
       }
+      return { cancel: () => {} };
     });
-    stompConfigs.forEach((item) => {
-      // Only start if endpoint is provided
+    setHttpCancelHandles(newHttpHandles);
+
+    const newStompHandles = stompConfigs.map((item) => {
       if (item.config.endpoint) {
-        runStompTest(item.config);
+        return runStompTest(item.config, soakDuration);
       }
+      return { cancel: () => {} };
     });
+    setStompCancelHandles(newStompHandles);
+  };
+
+  // Cancel all running tests
+  const cancelTesting = () => {
+    httpCancelHandles.forEach((handle) => handle.cancel());
+    stompCancelHandles.forEach((handle) => handle.cancel());
+    setHttpCancelHandles([]);
+    setStompCancelHandles([]);
   };
 
   return (
     <Box sx={{ p: 2 }}>
       <Typography variant="h4" gutterBottom>
         HTTP and STOMP (over WebSocket) Load Tester
+      </Typography>
+      <Typography variant="body1" sx={{ mb: 2 }}>
+        This load test will send a burst of requests/messages immediately, then
+        continue sending at the specified soak rate for the test duration.
+      </Typography>
+      <Typography variant="body1" sx={{ mb: 2 }}>
+        HTTP Requests and STOMP (over WebSocket) messages are supported. Use the
+        forms below to configure your test as desired, then start the test.
       </Typography>
       <Box sx={{ mb: 4 }}>
         <Typography variant="h5">HTTP Requests</Typography>
@@ -163,15 +207,25 @@ function App() {
           Add STOMP over WebSocket Connection
         </Button>
       </Box>
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={startTesting}
-        sx={{ mb: 4 }}
-      >
-        Start Testing
-      </Button>
-      <Box>
+      <Alert severity="warning" sx={{ mb: 2 }}>
+        WARNING: Only use this tool against systems where you have explicit
+        permission. Misuse may be considered a DDOS attack.
+      </Alert>
+      <Stack direction="row" spacing={1}>
+        <TextField
+          label="Test Duration (seconds)"
+          type="number"
+          value={soakDuration}
+          onChange={(e) => setSoakDuration(Number(e.target.value))}
+        />
+        <Button variant="contained" color="primary" onClick={startTesting}>
+          Start Testing
+        </Button>
+        <Button variant="outlined" color="error" onClick={cancelTesting}>
+          Cancel Test
+        </Button>
+      </Stack>
+      <Box sx={{ mt: 4 }}>
         <Typography variant="h5">Metrics</Typography>
         <Box sx={{ mt: 2 }}>
           <Typography variant="h6">HTTP Metrics</Typography>

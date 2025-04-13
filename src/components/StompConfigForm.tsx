@@ -43,7 +43,6 @@ const StompConfigForm: React.FC<StompConfigFormProps> = ({
     onChange({ ...config, messages: [...config.messages, newMessage] });
   };
 
-
   return (
     <Accordion sx={{ mb: 2, position: "relative" }}>
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>

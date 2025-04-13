@@ -28,24 +28,34 @@ export function getRunningTime(): number {
   return Math.floor((Date.now() - httpMetrics.startTime) / 1000);
 }
 
-export function runHttpTest(config: HttpTestConfigType): void {
+export function runHttpTest(config: HttpTestConfigType, soakDuration: number): { cancel: () => void } {
   // Reset startTime on new test
   httpMetrics.startTime = Date.now();
 
-  // Soak test: send requests continuously at the specified soakRate
+  // Immediately send a burst of requests
+  for (let i = 0; i < config.burstRate; i++) {
+    axios.post(config.url, config.body).catch(() => {});
+    httpMetrics.totalMessages++;
+    httpMetrics._lastSecondCount++;
+  }
+
+  // Start the soak interval
   const intervalMs = 1000 / config.soakRate;
-  setInterval(() => {
+  const soakInterval = setInterval(() => {
     axios.post(config.url, config.body).catch(() => {});
     httpMetrics.totalMessages++;
     httpMetrics._lastSecondCount++;
   }, intervalMs);
 
-  // Burst test: send requests in bursts every second
-  setInterval(() => {
-    for (let i = 0; i < config.burstRate; i++) {
-      axios.post(config.url, config.body).catch(() => {});
-      httpMetrics.totalMessages++;
-      httpMetrics._lastSecondCount++;
+  // After soakDuration seconds, stop the soak interval
+  const soakTimeout = setTimeout(() => {
+    clearInterval(soakInterval);
+  }, soakDuration * 1000);
+
+  return {
+    cancel: () => {
+      clearInterval(soakInterval);
+      clearTimeout(soakTimeout);
     }
-  }, 1000);
+  };
 }
