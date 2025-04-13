@@ -6,6 +6,7 @@ import {
   TextField,
   Alert,
   Stack,
+  Tooltip,
 } from "@mui/material";
 import HttpConfigForm from "./components/HttpConfigForm";
 import StompConfigForm from "./components/StompConfigForm";
@@ -227,15 +228,6 @@ function App() {
           test.
         </Typography>
         <IsTestingContext.Provider value={isTesting}>
-          <TextField
-            label="Basic Auth Usernames (comma separated)"
-            value={usernamesInput}
-            onChange={(e) => setUsernamesInput(e.target.value)}
-            fullWidth
-            margin="normal"
-            disabled={isTesting}
-          />
-
           <Box sx={{ mb: 4 }}>
             <Typography variant="h5">HTTP Requests</Typography>
             {httpConfigs.map((item) => (
@@ -279,7 +271,18 @@ function App() {
             permission. Misuse may be considered a DDOS attack.
           </Alert>
           <Stack direction="row" spacing={1}>
-            <Box sx={{ flex: 1 }} />
+            <Tooltip
+              sx={{ flex: 1 }}
+              title="Enter a comma-separated list of usernames to be used for Basic Authentication. Each username will be looped through and attached to HTTP requests during the test."
+            >
+              <TextField
+                label="Basic Auth Usernames (comma separated)"
+                value={usernamesInput}
+                onChange={(e) => setUsernamesInput(e.target.value)}
+                fullWidth
+                disabled={isTesting}
+              />
+            </Tooltip>
             <TextField
               label="Test Duration (seconds)"
               type="number"
