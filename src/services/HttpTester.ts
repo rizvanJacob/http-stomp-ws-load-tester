@@ -2,7 +2,7 @@ import axios from "axios";
 
 export interface HttpTestConfig {
   url: string;
-  body: any;
+  body: object;
   soakRate: number; // requests per second continuously
   burstRate: number; // requests per second in bursts
 }

@@ -16,15 +16,16 @@ const HttpConfigForm: React.FC<HttpConfigFormProps> = ({
   const handleChange =
     (field: keyof HttpTestConfig) =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      let newValue: any = e.target.value;
+      let newValue: unknown = e.target.value;
       if (field === "soakRate" || field === "burstRate") {
         newValue = Number(newValue);
       } else if (field === "body") {
         // Try to parse JSON, if fails then keep as string
         try {
-          newValue = JSON.parse(newValue);
+          newValue = JSON.parse(newValue as string);
         } catch (err) {
-          newValue = newValue;
+          console.error(err);
+          newValue = newValue as string;
         }
       }
       onChange({ ...config, [field]: newValue });
@@ -47,7 +48,7 @@ const HttpConfigForm: React.FC<HttpConfigFormProps> = ({
         <RemoveCircleOutline />
       </IconButton>
       <Typography variant="h6" gutterBottom>
-        HTTP Load Test Configuration
+        Configure HTTP Load Test
       </Typography>
       <TextField
         label="URL"

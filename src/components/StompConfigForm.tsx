@@ -16,7 +16,7 @@ const StompConfigForm: React.FC<StompConfigFormProps> = ({
   const handleChange =
     (field: keyof Omit<StompTestConfig, "messages">) =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      let newValue: any = e.target.value;
+      let newValue: unknown = e.target.value;
       if (field === "soakRate" || field === "burstRate") {
         newValue = Number(newValue);
       }
@@ -27,12 +27,13 @@ const StompConfigForm: React.FC<StompConfigFormProps> = ({
     (index: number, field: keyof StompMessage) =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const messages = [...config.messages];
-      let newValue: any = e.target.value;
+      let newValue: unknown = e.target.value;
       if (field === "headers" || field === "body") {
         try {
-          newValue = JSON.parse(newValue);
+          newValue = JSON.parse(newValue as string);
         } catch (error) {
-          newValue = newValue;
+          console.error(error);
+          newValue = newValue as string;
         }
       }
       messages[index] = { ...messages[index], [field]: newValue };

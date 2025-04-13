@@ -3,7 +3,7 @@ import { Client } from "@stomp/stompjs";
 export interface StompMessage {
   destination: string;
   headers: Record<string, string>;
-  body: any;
+  body: object;
 }
 
 export interface StompTestConfig {
