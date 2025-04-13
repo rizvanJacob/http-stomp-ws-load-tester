@@ -34,14 +34,38 @@ const defaultStompConfig: StompTestConfigType = {
   burstRate: 1,
 };
 
+type ConfigType<T> = {
+  id: number;
+  config: T;
+};
+
 function App() {
   // States for config lists
-  const [httpConfigs, setHttpConfigs] = useState([
-    { id: getUniqueId(), config: { ...defaultHttpConfig } },
-  ]);
-  const [stompConfigs, setStompConfigs] = useState([
-    { id: getUniqueId(), config: { ...defaultStompConfig } },
-  ]);
+  const [httpConfigs, setHttpConfigs] = useState(() => {
+    const savedHttpConfigs = localStorage.getItem("httpConfigs");
+    return (
+      savedHttpConfigs
+        ? JSON.parse(savedHttpConfigs)
+        : [{ id: getUniqueId(), config: { ...defaultHttpConfig } }]
+    ) as ConfigType<HttpTestConfigType>[];
+  });
+
+  useEffect(() => {
+    localStorage.setItem("httpConfigs", JSON.stringify(httpConfigs));
+  }, [httpConfigs]);
+
+  const [stompConfigs, setStompConfigs] = useState(() => {
+    const savedStompConfigs = localStorage.getItem("stompConfigs");
+    return (
+      savedStompConfigs
+        ? JSON.parse(savedStompConfigs)
+        : [{ id: getUniqueId(), config: { ...defaultStompConfig } }]
+    ) as ConfigType<StompTestConfigType>[];
+  });
+
+  useEffect(() => {
+    localStorage.setItem("stompConfigs", JSON.stringify(stompConfigs));
+  }, [stompConfigs]);
 
   // Dummy state for re-rendering metrics
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
