@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getNextUsername } from "./BasiscAuthUsernameProvider";
 
 export type AllowedMethodsType = "get" | "post" | "put" | "delete" | "patch";
 
@@ -37,9 +38,19 @@ export function runHttpTest(
 
   // Immediately send a burst of requests
   for (let i = 0; i < config.burstRate; i++) {
-    axios({ method: config.method, url: config.url, data: config.body }).catch(
-      () => {}
-    );
+    const username = getNextUsername();
+    const auth = username
+      ? {
+          username,
+          password: "password",
+        }
+      : undefined;
+    axios({
+      method: config.method,
+      url: config.url,
+      data: config.body,
+      auth,
+    }).catch(() => {});
     httpMetrics.totalMessages++;
     httpMetrics._lastSecondCount++;
   }
@@ -47,9 +58,20 @@ export function runHttpTest(
   // Start the soak interval
   const intervalMs = 1000 / config.soakRate;
   const soakInterval = setInterval(() => {
-    axios({ method: config.method, url: config.url, data: config.body }).catch(
-      () => {}
-    );
+    const username = getNextUsername();
+    const auth = username
+      ? {
+          username,
+          password: "password",
+        }
+      : undefined;
+
+    axios({
+      method: config.method,
+      url: config.url,
+      data: config.body,
+      auth,
+    }).catch(() => {});
     httpMetrics.totalMessages++;
     httpMetrics._lastSecondCount++;
   }, intervalMs);

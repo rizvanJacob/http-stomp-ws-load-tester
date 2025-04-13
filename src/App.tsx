@@ -24,6 +24,7 @@ import {
 import { IsTestingContext } from "./contexts/IsTestingContext";
 import { ThemeProvider, CssBaseline } from "@mui/material";
 import theme from "./theme";
+import { setUsernames } from "./services/BasiscAuthUsernameProvider";
 
 // Utility to generate unique IDs
 let idCounter = 1;
@@ -52,6 +53,7 @@ interface ConfigType<T> {
 
 const httpConfigsKey = "httpConfigs";
 const stompConfigsKey = "stompConfigs";
+const usernamesKey = "usernames";
 
 function App() {
   // State for configurations
@@ -63,6 +65,9 @@ function App() {
       ? JSON.parse(saved)
       : [{ id: getUniqueId(), config: { ...defaultHttpConfig } }];
   });
+  useEffect(() => {
+    localStorage.setItem(httpConfigsKey, JSON.stringify(httpConfigs));
+  }, [httpConfigs]);
 
   const [stompConfigs, setStompConfigs] = useState<
     ConfigType<StompTestConfigType>[]
@@ -72,14 +77,23 @@ function App() {
       ? JSON.parse(saved)
       : [{ id: getUniqueId(), config: { ...defaultStompConfig } }];
   });
-
-  useEffect(() => {
-    localStorage.setItem(httpConfigsKey, JSON.stringify(httpConfigs));
-  }, [httpConfigs]);
-
   useEffect(() => {
     localStorage.setItem(stompConfigsKey, JSON.stringify(stompConfigs));
   }, [stompConfigs]);
+
+  // Usernames for basic auth
+  const [usernamesInput, setUsernamesInput] = useState<string>(() => {
+    const saved = localStorage.getItem(usernamesKey);
+    return saved || "";
+  });
+  useEffect(() => {
+    localStorage.setItem(usernamesKey, usernamesInput);
+    const names = usernamesInput
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+    setUsernames(names);
+  }, [usernamesInput]);
 
   // Global soak duration state
   const [isTesting, setIsTesting] = useState(false);
@@ -213,6 +227,15 @@ function App() {
           test.
         </Typography>
         <IsTestingContext.Provider value={isTesting}>
+          <TextField
+            label="Basic Auth Usernames (comma separated)"
+            value={usernamesInput}
+            onChange={(e) => setUsernamesInput(e.target.value)}
+            fullWidth
+            margin="normal"
+            disabled={isTesting}
+          />
+
           <Box sx={{ mb: 4 }}>
             <Typography variant="h5">HTTP Requests</Typography>
             {httpConfigs.map((item) => (

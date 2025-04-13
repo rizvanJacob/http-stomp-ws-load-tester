@@ -1,5 +1,6 @@
 import { Client } from "@stomp/stompjs";
 import axios from "axios";
+import { getNextUsername } from "./BasiscAuthUsernameProvider";
 
 export type StompMessageType = {
   destination: string;
@@ -44,7 +45,14 @@ export async function runStompTest(
 
   let token: string = "";
   if (config.authEndpoint) {
-    token = await axios.get(config.authEndpoint);
+    const username = getNextUsername();
+    const auth = username
+      ? {
+          username,
+          password: "password",
+        }
+      : undefined;
+    token = await axios({ method: "get", url: config.authEndpoint, auth });
   }
 
   const client = new Client({
