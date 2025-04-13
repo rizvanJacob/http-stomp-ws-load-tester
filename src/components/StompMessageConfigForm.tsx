@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 import {
   Accordion,
   AccordionSummary,
@@ -11,6 +11,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { StompMessageType } from "../services/StompTester";
 import RateConfig from "./RateConfig";
+import { IsTestingContext } from "../contexts/IsTestingContext";
 
 interface StompMessageConfigFormProps {
   message: StompMessageType;
@@ -35,6 +36,8 @@ const StompMessageConfigForm: React.FC<StompMessageConfigFormProps> = ({
   onRateChange,
   onRemove,
 }) => {
+  const isTesting = useContext(IsTestingContext);
+
   const handleFieldChange =
     (field: keyof StompMessageType) =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -59,7 +62,11 @@ const StompMessageConfigForm: React.FC<StompMessageConfigFormProps> = ({
             ? `Message to ${message.destination}`
             : "New Message Configuration"}
         </Typography>
-        <IconButton onClick={() => onRemove(index)} sx={{ ml: "auto" }}>
+        <IconButton
+          onClick={() => onRemove(index)}
+          sx={{ ml: "auto" }}
+          disabled={isTesting}
+        >
           <DeleteIcon fontSize="small" />
         </IconButton>
       </AccordionSummary>
@@ -70,6 +77,7 @@ const StompMessageConfigForm: React.FC<StompMessageConfigFormProps> = ({
           onChange={handleFieldChange("destination")}
           fullWidth
           margin="normal"
+          disabled={isTesting}
         />
         <TextField
           label="Headers (JSON)"
@@ -83,6 +91,7 @@ const StompMessageConfigForm: React.FC<StompMessageConfigFormProps> = ({
           margin="normal"
           multiline
           minRows={2}
+          disabled={isTesting}
         />
         <TextField
           label="Body (JSON)"
@@ -96,6 +105,7 @@ const StompMessageConfigForm: React.FC<StompMessageConfigFormProps> = ({
           margin="normal"
           multiline
           minRows={2}
+          disabled={isTesting}
         />
         <RateConfig
           soakRate={message.soakRate}

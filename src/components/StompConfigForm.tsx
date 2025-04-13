@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 import {
   Box,
   TextField,
@@ -13,6 +13,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { StompTestConfigType, StompMessageType } from "../services/StompTester";
 import StompMessageConfigForm from "./StompMessageConfigForm";
+import { IsTestingContext } from "../contexts/IsTestingContext";
 
 interface StompConfigFormProps {
   config: StompTestConfigType;
@@ -25,6 +26,8 @@ const StompConfigForm: React.FC<StompConfigFormProps> = ({
   onChange,
   onRemove,
 }) => {
+  const isTesting = useContext(IsTestingContext);
+
   const handleChange =
     (field: keyof Omit<StompTestConfigType, "messages">) =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -51,7 +54,7 @@ const StompConfigForm: React.FC<StompConfigFormProps> = ({
             ? `Websocket Connection: ${config.endpoint}`
             : "New Websocket Connection Configuration"}
         </Typography>
-        <IconButton onClick={onRemove} sx={{ ml: "auto" }}>
+        <IconButton onClick={onRemove} sx={{ ml: "auto" }} disabled={isTesting}>
           <DeleteIcon />
         </IconButton>
       </AccordionSummary>
@@ -63,6 +66,7 @@ const StompConfigForm: React.FC<StompConfigFormProps> = ({
             onChange={handleChange("endpoint")}
             fullWidth
             margin="normal"
+            disabled={isTesting}
           />
           {config.messages.map((message, index) => (
             <StompMessageConfigForm
@@ -85,7 +89,12 @@ const StompConfigForm: React.FC<StompConfigFormProps> = ({
               }}
             />
           ))}
-          <Button variant="outlined" onClick={addMessage} sx={{ mt: 1 }}>
+          <Button
+            variant="outlined"
+            onClick={addMessage}
+            sx={{ mt: 1 }}
+            disabled={isTesting}
+          >
             Add STOMP Message
           </Button>
         </Box>

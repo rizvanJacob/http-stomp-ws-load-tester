@@ -16,6 +16,8 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { AllowedMethodsType, HttpTestConfigType } from "../services/HttpTester";
 import RateConfig from "./RateConfig";
+import { useContext } from "react";
+import { IsTestingContext } from "../contexts/IsTestingContext";
 
 type HttpConfigFormPropsType = {
   config: HttpTestConfigType;
@@ -28,6 +30,8 @@ const HttpConfigForm: React.FC<HttpConfigFormPropsType> = ({
   onChange,
   onRemove,
 }) => {
+  const isTesting = useContext(IsTestingContext);
+
   const handleChange =
     (field: keyof HttpTestConfigType) =>
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,7 +59,7 @@ const HttpConfigForm: React.FC<HttpConfigFormPropsType> = ({
             ? `${config.method.toUpperCase()} to ${config.url}`
             : "New HTTP Request"}
         </Typography>
-        <IconButton onClick={onRemove} sx={{ ml: "auto" }}>
+        <IconButton onClick={onRemove} sx={{ ml: "auto" }} disabled={isTesting}>
           <DeleteIcon />
         </IconButton>
       </AccordionSummary>
@@ -77,6 +81,7 @@ const HttpConfigForm: React.FC<HttpConfigFormPropsType> = ({
                     e as React.ChangeEvent<HTMLInputElement>
                   )
                 }
+                disabled={isTesting}
               >
                 <MenuItem value={"get"}>GET</MenuItem>
                 <MenuItem value={"post"}>POST</MenuItem>
@@ -91,6 +96,7 @@ const HttpConfigForm: React.FC<HttpConfigFormPropsType> = ({
               onChange={handleChange("url")}
               fullWidth
               margin="none"
+              disabled={isTesting}
             />
           </Stack>
           <TextField
@@ -106,6 +112,7 @@ const HttpConfigForm: React.FC<HttpConfigFormPropsType> = ({
             margin="normal"
             multiline
             minRows={3}
+            disabled={isTesting}
           />
           <RateConfig
             soakRate={config.soakRate}

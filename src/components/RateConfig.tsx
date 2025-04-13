@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useContext } from "react";
 import { Stack, TextField } from "@mui/material";
+import { IsTestingContext } from "../contexts/IsTestingContext";
 
 interface RateConfigProps {
   soakRate: number;
@@ -12,6 +13,8 @@ const RateConfig: React.FC<RateConfigProps> = ({
   burstRate,
   onChange,
 }) => {
+  const isTesting = useContext(IsTestingContext);
+
   return (
     <Stack direction="row" alignItems="center">
       <TextField
@@ -20,6 +23,7 @@ const RateConfig: React.FC<RateConfigProps> = ({
         value={soakRate}
         onChange={(e) => onChange("soakRate", Number(e.target.value))}
         fullWidth
+        disabled={isTesting}
       />
       <TextField
         label="Burst Rate (per sec)"
@@ -27,6 +31,7 @@ const RateConfig: React.FC<RateConfigProps> = ({
         value={burstRate}
         onChange={(e) => onChange("burstRate", Number(e.target.value))}
         fullWidth
+        disabled={isTesting}
       />
     </Stack>
   );

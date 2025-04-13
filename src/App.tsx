@@ -21,6 +21,7 @@ import {
   stompMetrics,
   getRunningTime as getStompRunningTime,
 } from "./services/StompTester";
+import { IsTestingContext } from "./contexts/IsTestingContext";
 
 // Utility to generate unique IDs
 let idCounter = 1;
@@ -79,6 +80,7 @@ function App() {
   }, [stompConfigs]);
 
   // Global soak duration state
+  const [isTesting, setIsTesting] = useState(false);
   const [soakDuration, setSoakDuration] = useState(60); // default 60 seconds
 
   // Dummy state for re-rendering metrics
@@ -133,6 +135,15 @@ function App() {
     ]);
   };
 
+  const toggleTest = () => {
+    if (isTesting) {
+      cancelTesting();
+    } else {
+      startTesting();
+    }
+    setIsTesting((prev) => !prev);
+  };
+
   // Start all tests
   const startTesting = () => {
     // Clear any existing test handles
@@ -166,6 +177,14 @@ function App() {
     setStompCancelHandles([]);
   };
 
+  const getRunningTime = () => {
+    const httpRunningTime = getHttpRunningTime();
+    const stompRunningTime = getStompRunningTime();
+    return httpRunningTime > stompRunningTime
+      ? httpRunningTime
+      : stompRunningTime;
+  };
+
   return (
     <Box sx={{ p: 2 }}>
       <Typography variant="h4" gutterBottom>
@@ -179,75 +198,88 @@ function App() {
         HTTP Requests and STOMP (over WebSocket) messages are supported. Use the
         forms below to configure your test as desired, then start the test.
       </Typography>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h5">HTTP Requests</Typography>
-        {httpConfigs.map((item) => (
-          <HttpConfigForm
-            key={item.id}
-            config={item.config}
-            onChange={(config) => updateHttpConfig(item.id, config)}
-            onRemove={() => removeHttpConfig(item.id)}
-          />
-        ))}
-        <Button variant="outlined" onClick={addHttpConfig} sx={{ mt: 1 }}>
-          Add HTTP Request
-        </Button>
-      </Box>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h5">STOMP over WebSocket Messages</Typography>
-        {stompConfigs.map((item) => (
-          <StompConfigForm
-            key={item.id}
-            config={item.config}
-            onChange={(config) => updateStompConfig(item.id, config)}
-            onRemove={() => removeStompConfig(item.id)}
-          />
-        ))}
-        <Button variant="outlined" onClick={addStompConfig} sx={{ mt: 1 }}>
-          Add STOMP over WebSocket Connection
-        </Button>
-      </Box>
-      <Alert severity="warning" sx={{ mb: 2 }}>
-        WARNING: Only use this tool against systems where you have explicit
-        permission. Misuse may be considered a DDOS attack.
-      </Alert>
-      <Stack direction="row" spacing={1}>
-        <TextField
-          label="Test Duration (seconds)"
-          type="number"
-          value={soakDuration}
-          onChange={(e) => setSoakDuration(Number(e.target.value))}
-        />
-        <Button variant="contained" color="primary" onClick={startTesting}>
-          Start Testing
-        </Button>
-        <Button variant="outlined" color="error" onClick={cancelTesting}>
-          Cancel Test
-        </Button>
-      </Stack>
-      <Box sx={{ mt: 4 }}>
-        <Typography variant="h5">Metrics</Typography>
-        <Box sx={{ mt: 2 }}>
-          <Typography variant="h6">HTTP Metrics</Typography>
-          <Typography>
-            Total Requests Sent: {httpMetrics.totalMessages}
-          </Typography>
-          <Typography>
-            Requests Sent in Last Second: {httpMetrics.messagesLastSecond}
-          </Typography>
-          <Typography>Running Time: {getHttpRunningTime()} seconds</Typography>
+      <IsTestingContext.Provider value={isTesting}>
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h5">HTTP Requests</Typography>
+          {httpConfigs.map((item) => (
+            <HttpConfigForm
+              key={item.id}
+              config={item.config}
+              onChange={(config) => updateHttpConfig(item.id, config)}
+              onRemove={() => removeHttpConfig(item.id)}
+            />
+          ))}
+          <Button
+            variant="outlined"
+            onClick={addHttpConfig}
+            sx={{ mt: 1 }}
+            disabled={isTesting}
+          >
+            Add HTTP Request
+          </Button>
         </Box>
-        <Box sx={{ mt: 2 }}>
-          <Typography variant="h6">STOMP Metrics</Typography>
-          <Typography>
-            Total Messages Sent: {stompMetrics.totalMessages}
-          </Typography>
-          <Typography>
-            Messages Sent in Last Second: {stompMetrics.messagesLastSecond}
-          </Typography>
-          <Typography>Running Time: {getStompRunningTime()} seconds</Typography>
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h5">STOMP over WebSocket Messages</Typography>
+          {stompConfigs.map((item) => (
+            <StompConfigForm
+              key={item.id}
+              config={item.config}
+              onChange={(config) => updateStompConfig(item.id, config)}
+              onRemove={() => removeStompConfig(item.id)}
+            />
+          ))}
+          <Button
+            variant="outlined"
+            onClick={addStompConfig}
+            sx={{ mt: 1 }}
+            disabled={isTesting}
+          >
+            Add STOMP over WebSocket Connection
+          </Button>
         </Box>
-      </Box>
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          WARNING: Only use this tool against systems where you have explicit
+          permission. Misuse may be considered a DDOS attack.
+        </Alert>
+        <Stack direction="row" spacing={1}>
+          <TextField
+            label="Test Duration (seconds)"
+            type="number"
+            value={soakDuration}
+            onChange={(e) => setSoakDuration(Number(e.target.value))}
+            disabled={isTesting}
+          />
+          <Button
+            variant={isTesting ? "outlined" : "contained"}
+            color={isTesting ? "error" : "primary"}
+            onClick={toggleTest}
+          >
+            {isTesting ? "Cancel Test" : "Start Test"}
+          </Button>
+        </Stack>
+      </IsTestingContext.Provider>
+      {isTesting && (
+        <Box sx={{ mt: 4 }}>
+          <Typography variant="h5">Metrics</Typography>
+          <Box sx={{ mt: 2 }}>
+            <Typography>
+              Total HTTP Requests Sent: {httpMetrics.totalMessages}
+            </Typography>
+            <Typography>
+              HTTP Requests Sent in Last Second:{" "}
+              {httpMetrics.messagesLastSecond}
+            </Typography>
+            <Typography>
+              Total STOMP Messages Sent: {stompMetrics.totalMessages}
+            </Typography>
+            <Typography>
+              STOMP Messages Sent in Last Second:{" "}
+              {stompMetrics.messagesLastSecond}
+            </Typography>
+            <Typography>Running Time: {getRunningTime()} seconds</Typography>
+          </Box>
+        </Box>
+      )}
     </Box>
   );
 }
